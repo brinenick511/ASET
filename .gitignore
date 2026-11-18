@@ -205,3 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# ASET evaluation output and local artifacts
+/aset-results.json
+/artifacts/
+/checkpoints/

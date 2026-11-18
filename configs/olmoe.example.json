@@ -1,0 +1,17 @@
+{
+  "model": "skip",
+  "model_args": {
+    "pretrained": "allenai/OLMoE-1B-7B-0125-Instruct",
+    "revision": "b89a7c4bc24fb9e55ce2543c9458ce0ca5c4650e",
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa",
+    "tau_min": 0.2,
+    "tau_max": 0.7,
+    "beta": 4
+  },
+  "device": "cuda:0",
+  "batch_size": 1,
+  "num_fewshot": 0,
+  "tasks": ["arc_challenge", "arc_easy", "boolq", "openbookqa", "rte", "winogrande"],
+  "gen_kwargs": {"temperature": 0, "do_sample": false}
+}
