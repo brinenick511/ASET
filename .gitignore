@@ -209,3 +209,6 @@ __marimo__/
 /aset-results.json
 /artifacts/
 /checkpoints/
+/throughput-*.jsonl
+/throughput-*.jsonl.routing.json
+/tasks-example.json

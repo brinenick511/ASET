@@ -2,6 +2,8 @@
 
 Adaptive Skipping with Entropy-Penalized Thresholding for OLMoE. [`routing.py`](routing.py) implements the candidate prefix, normalized entropy and per-token threshold in §4.3 and Algorithm 1. It dispatches only the retained experts within OLMoE's original top-8 budget. [`evaluate.py`](evaluate.py) uses lm-eval to score the six tasks from the archived OLMoE run.
 
+The v0.4 supplement covers static expert skipping in SGLang on eight H200s. [DeepSeek-V3 supplement](experiments/deepseek-v3/README.md)
+
 ## Run
 
 Use Python 3.11 and one CUDA GPU with BF16 support. From this directory, run the configuration check and then the evaluation. The evaluation downloads the pinned OLMoE checkpoint and the benchmark datasets.

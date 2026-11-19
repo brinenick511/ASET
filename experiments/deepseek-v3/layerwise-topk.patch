@@ -1,0 +1,57 @@
+ASET v0.4 modification to SGLang deepseek_v2.py
+Apache-2.0. See LICENSE-SGLang.txt for the original terms and upstream copyright.
+
+diff --git a/python/sglang/srt/models/deepseek_v2.py b/python/sglang/srt/models/deepseek_v2.py
+--- a/python/sglang/srt/models/deepseek_v2.py
++++ b/python/sglang/srt/models/deepseek_v2.py
+@@ -156,8 +156,11 @@
+         config: PretrainedConfig,
+         quant_config: Optional[QuantizationConfig] = None,
+         prefix: str = "",
++        top_k: Optional[int] = None,
+     ):
+         super().__init__()
++        if top_k is None:
++            top_k = config.num_experts_per_tok
+         self.tp_size = get_tensor_model_parallel_world_size()
+         self.routed_scaling_factor = config.routed_scaling_factor
+         self.n_shared_experts = config.n_shared_experts
+@@ -183,7 +186,7 @@
+         )
+         self.experts = MoEImpl(
+             num_experts=config.n_routed_experts,
+-            top_k=config.num_experts_per_tok,
++            top_k=top_k,
+             hidden_size=config.hidden_size,
+             intermediate_size=config.moe_intermediate_size,
+             renormalize=config.norm_topk_prob,
+@@ -221,7 +224,7 @@
+ 
+         if global_server_args_dict["enable_deepep_moe"]:
+             self.num_experts = config.n_routed_experts
+-            self.top_k = config.num_experts_per_tok
++            self.top_k = top_k
+             self.renormalize = config.norm_topk_prob
+             self.topk_group = config.topk_group
+             self.num_expert_group = config.n_group
+@@ -1023,10 +1026,20 @@
+             and layer_id >= config.first_k_dense_replace
+             and layer_id % config.moe_layer_freq == 0
+         ):
++            # ASET v0.4 adds optional per-decoder-layer routed top-k.
++            topk_list = getattr(config, "topk_list", None)
++            top_k = None
++            if topk_list is not None and not is_nextn:
++                if not isinstance(topk_list, list) or len(topk_list) != config.num_hidden_layers:
++                    raise ValueError("topk_list must have one entry per decoder layer")
++                top_k = topk_list[layer_id]
++                if type(top_k) is not int or not 1 <= top_k <= config.num_experts_per_tok:
++                    raise ValueError(f"Invalid topk_list entry for MoE layer {layer_id}")
+             self.mlp = DeepseekV2MoE(
+                 config=config,
+                 quant_config=quant_config,
+                 prefix=add_prefix("mlp", prefix),
++                top_k=top_k,
+             )
+         else:
+             self.mlp = DeepseekV2MLP(
