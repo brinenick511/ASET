@@ -1,12 +1,12 @@
 # ASET
 
-Adaptive Skipping with Entropy-Penalized Thresholding for OLMoE. [`routing.py`](routing.py) implements the candidate prefix, normalized entropy and per-token threshold in §4.3 and Algorithm 1. It dispatches only the retained experts within OLMoE's original top-8 budget. [`evaluate.py`](evaluate.py) uses lm-eval to score the six tasks from the archived OLMoE run.
+[![ACL Anthology](https://img.shields.io/badge/ACL_Anthology-2026.findings--acl.2140-1f6feb?style=flat)](https://aclanthology.org/2026.findings-acl.2140/)
 
-The v0.4 supplement covers static expert skipping in SGLang on eight H200s. [DeepSeek-V3 supplement](experiments/deepseek-v3/README.md)
+Code for *Faster MoE LLM Inference for Extremely Large Models* (Findings of ACL 2026). Adaptive Skipping with Entropy-Penalized Thresholding (ASET) chooses how many of OLMoE's top eight experts to activate for each token. The repository also includes static expert skipping in SGLang for DeepSeek-V3 on eight H200s. [Paper PDF](docs/paper.pdf) · [Poster PDF](docs/poster.pdf) · [DeepSeek-V3 experiment](experiments/deepseek-v3/README.md)
 
-## Run
+## OLMoE evaluation
 
-Use Python 3.11 and one CUDA GPU with BF16 support. From this directory, run the configuration check and then the evaluation. The evaluation downloads the pinned OLMoE checkpoint and the benchmark datasets.
+Use Python 3.11 and one CUDA GPU with BF16 support. The evaluation downloads the pinned OLMoE checkpoint and benchmark datasets.
 
 ```sh
 python3.11 -m venv .venv
@@ -16,19 +16,29 @@ python evaluate.py --config configs/olmoe.example.json --check-config
 python evaluate.py --config configs/olmoe.example.json --limit 2 --output-path aset-results.json
 ```
 
-The configuration check validates required fields and prints the parsed JSON. The evaluation writes task metrics in `results` and the mean of the per-layer expert counts per routed position in `TOPK`. For this checkpoint, `TOPK` is between 1 and 8. The count includes padding positions, so compare runs with matching batching and padding. Omit `--limit` to score each full task.
+Omit `--limit` to run all six tasks in full. The output includes task metrics in `results` and mean experts per routed position in `TOPK`. The count includes padding, so use matching batching and padding across comparisons.
 
-The CLI accepts `0 <= tau_min <= tau_max <= 1` and a finite positive `beta`. These keys represent the paper's θ_min, θ_max and γ.
+[`routing.py`](routing.py) implements §4.3 and Algorithm 1. The config keys `tau_min`, `tau_max` and `beta` correspond to the paper's θ_min, θ_max and γ. Use `0 <= tau_min <= tau_max <= 1` and a finite positive `beta`.
 
-**Ubuntu status.** The historical run recorded Ubuntu 22.04.4 LTS with PyTorch 2.4.1 and CUDA 12.1. This release has not been run on Ubuntu or with the full checkpoint.
+The sample uses BF16, batch size 1 and SDPA. The archived six-task run used a local checkpoint, batch size 16 and FlashAttention 2, and recorded `TOPK=3.373717576265335` at `tau_min=0.2`, `tau_max=0.7` and `beta=4`. Figure 6 reproduction is pending. [Archived evaluator](https://github.com/brinenick511/lm_eval_aaai/tree/34b7fc7257f1399bdefd091da0cff72017a29fdc) · [Pinned OLMoE checkpoint](https://huggingface.co/allenai/OLMoE-1B-7B-0125-Instruct/tree/b89a7c4bc24fb9e55ce2543c9458ce0ca5c4650e)
 
-## Cite and trace
+## Licenses
 
-Haoqi Yang, Luohe Shi, Qiwei Li, Zuchao Li, Ping Wang, Hao Huang, and Hai Zhao. 2026. *Faster MoE LLM Inference for Extremely Large Models*. Findings of the Association for Computational Linguistics: ACL 2026. [Paper](https://aclanthology.org/2026.findings-acl.2140/)
+The OLMoE block adapts [Transformers 4.51.3](https://github.com/huggingface/transformers/blob/v4.51.3/src/transformers/models/olmoe/modeling_olmoe.py#L576). Evaluation uses [lm-evaluation-harness 0.4.9](https://github.com/EleutherAI/lm-evaluation-harness/tree/v0.4.9). [ASET MIT license](LICENSE) · [Transformers Apache 2.0 terms](licenses/Transformers-Apache-2.0.txt) · [EleutherAI MIT notice](licenses/lm-evaluation-harness-MIT.txt)
 
-In the experiment archive, `data/olmoe.tar.gz` contains `olmoe/fag_4/0.2_0.7_2025-07-30T03-50-03.951557.json`. That result records the six zero-shot tasks, generation settings, checkpoint name, BF16 and `tau_min=0.2`, `tau_max=0.7`, `beta=4` used in the sample. The archived run used a local checkpoint path, batch size 16 and FlashAttention 2, and reported `TOPK=3.373717576265335`. The sample pins a Hub revision and uses batch size 1 and SDPA. The release router follows the paper and the archived OLMoE block interface. Figure 6 reproduction remains unverified.
+The published paper is available under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Publication record](https://aclanthology.org/2026.findings-acl.2140/)
 
-- Recorded evaluation checkout [lm_eval_aaai at `34b7fc72`](https://github.com/brinenick511/lm_eval_aaai/tree/34b7fc7257f1399bdefd091da0cff72017a29fdc).
-- OLMoE block adapted from the archived `calibration/models/debugging_olmoe.py` at `7f7643879155bbe748489c7cb628a4810c34dd3e` and [Transformers 4.51.3](https://github.com/huggingface/transformers/blob/v4.51.3/src/transformers/models/olmoe/modeling_olmoe.py#L576).
-- Evaluation dependencies [lm-evaluation-harness 0.4.9](https://github.com/EleutherAI/lm-evaluation-harness/tree/v0.4.9) and [AllenAI OLMoE revision `b89a7c4`](https://huggingface.co/allenai/OLMoE-1B-7B-0125-Instruct/tree/b89a7c4bc24fb9e55ce2543c9458ce0ca5c4650e).
-- [ASET MIT license](LICENSE), [OLMoE Apache 2.0 terms](licenses/Transformers-Apache-2.0.txt), and [EleutherAI MIT notice](licenses/lm-evaluation-harness-MIT.txt).
+## Citation
+
+```bibtex
+@inproceedings{yang-etal-2026-faster,
+  title     = {Faster {M}o{E} {LLM} Inference for Extremely Large Models},
+  author    = {Yang, Haoqi and Shi, Luohe and Li, Qiwei and Li, Zuchao and
+               Wang, Ping and Huang, Hao and Zhao, Hai},
+  booktitle = {Findings of the Association for Computational Linguistics: ACL 2026},
+  year      = {2026},
+  pages     = {43133--43151},
+  doi       = {10.18653/v1/2026.findings-acl.2140},
+  url       = {https://aclanthology.org/2026.findings-acl.2140/}
+}
+```

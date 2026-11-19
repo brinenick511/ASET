@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if (( $# != 5 )); then
-    echo "Usage: $0 CHECKPOINT SHAREGPT_JSON OUTPUT_JSONL (--top-k K | --topk-list FILE)" >&2
+if (( $# < 3 )); then
+    echo "Usage: $0 CHECKPOINT SHAREGPT_JSON OUTPUT_JSONL [--top-k K | --topk-list FILE]" >&2
     exit 2
 fi
 checkpoint=$(cd -- "$1" >/dev/null && pwd -P)

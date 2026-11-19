@@ -34,7 +34,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 bash experiments/deepseek-v3/bench.sh "$model" "$sharegpt" throughput-k8.jsonl --top-k 8
 ```
 
-Repeat for `--top-k 6`, `4` and `3` in separate server runs. Pass the same setting to both scripts and use new output paths. The benchmark checks the checkpoint, TP size and routing override and writes the verified settings to `<output>.routing.json`. Set `PORT` in both terminals to change the loopback port and `READY_TIMEOUT` to change the 900-second startup wait. The server uses TP attention and stock compile settings by default. Set `DP_SIZE=2`, `4` or `8` to enable DP attention.
+Repeat for `--top-k 6`, `4` and `3` in separate server runs. Pass the same setting to both scripts and use new output paths. Both scripts default to the checkpoint's original top-k. The benchmark checks the checkpoint, TP size and routing override and writes the verified settings to `<output>.routing.json`. Set `PORT` in both terminals to change the loopback port and `READY_TIMEOUT` to change the 900-second startup wait. The server uses TP attention and stock compile settings by default. Set `DP_SIZE=2`, `4` or `8` to enable DP attention.
 
 For layerwise routing, pass `--topk-list schedule.json` in place of `--top-k`. The JSON array has one entry per zero-based decoder layer. Use `null` for dense layers and integers from 1 to the checkpoint's original k for MoE layers. For the 61-layer V3 configuration, this example gives the first 29 MoE layers k=4 and the last 29 k=6.
 
